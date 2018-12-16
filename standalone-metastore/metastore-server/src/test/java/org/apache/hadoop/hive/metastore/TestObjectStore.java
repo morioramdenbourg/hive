@@ -1066,7 +1066,7 @@ public class TestObjectStore {
    * This is not an ideal scenario. It is highly recommend to only set the javax.net.ssl.* properties.
    */
   @Test
-  public void testDeprecatedConfigIsOverriden() {
+  public void testDeprecatedConfigIsOverwritten() {
     // Different from the values in the safe config
     MetastoreConf.setVar(conf, MetastoreConf.ConfVars.DBACCESS_SSL_PROPS,
           "javax.net.ssl.trustStore=/tmp/truststore.p12,javax.net.ssl.trustStorePassword=pwd,javax.net.ssl.trustStoreType=pkcs12");
