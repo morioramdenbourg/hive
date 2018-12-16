@@ -1066,13 +1066,22 @@ public class TestObjectStore {
    * This is not an ideal scenario. It is highly recommend to only set the javax.net.ssl.* properties.
    */
   @Test
-  public void testDangerousSSLIsOverwritten() {
+  public void testDeprecatedConfigIsOverriden() {
     // Different from the values in the safe config
     MetastoreConf.setVar(conf, MetastoreConf.ConfVars.DBACCESS_SSL_PROPS,
           "javax.net.ssl.trustStore=/tmp/truststore.p12,javax.net.ssl.trustStorePassword=pwd,javax.net.ssl.trustStoreType=pkcs12");
 
     // Safe config
     setAndCheckSSLProperties(true, "/tmp/truststore.jks", "password", "jks");
+  }
+
+  /**
+   * Ensure that an empty trustStore path in metastore.dbaccess.ssl.truststore.path (hive.metastore.dbaccess.ssl.truststore.path)
+   * throws an IllegalArgumentException.
+   */
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyTrustStorePath() {
+    setAndCheckSSLProperties(true, "", "password", "jks");
   }
 
   /**

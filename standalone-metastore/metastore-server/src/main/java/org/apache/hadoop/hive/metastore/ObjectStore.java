@@ -127,6 +127,13 @@ public class ObjectStore implements RawStore, Configurable {
     NO_STATE, OPEN, COMMITED, ROLLBACK
   }
 
+  /**
+   * Java system properties for configuring SSL to the database store
+   */
+  private static final String trustStorePathKey = "javax.net.ssl.trustStore";
+  private static final String trustStorePasswordKey = "javax.net.ssl.trustStorePassword";
+  private static final String trustStoreTypeKey = "javax.net.ssl.trustStoreType";
+
   private static final Map<String, Class<?>> PINCLASSMAP;
   private static final String HOSTNAME;
   private static final String USER;
@@ -340,10 +347,9 @@ public class ObjectStore implements RawStore, Configurable {
    * @param conf
    */
   private static void configureSSL(Configuration conf) {
-    configureSSLDangerously(conf); // TODO: Deprecate this method
+    configureSSLDeprecated(conf); // TODO: Deprecate this method
 
     boolean useSSL = MetastoreConf.getBoolVar(conf, ConfVars.DBACCESS_USE_SSL);
-    LOG.info("Enable SSL to Database Store = {}", useSSL);
 
     if (useSSL) {
       try {
@@ -351,9 +357,11 @@ public class ObjectStore implements RawStore, Configurable {
         String trustStorePath = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH).trim();
         if (trustStorePath.isEmpty()) {
           throw new IllegalArgumentException("SSL to the database store has been enabled but " + ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH.toString() + " is empty. "
-              + "Set this property to enable SSL. Disabling SSL and continuing.");
+              + "Set this property to enable SSL.");
         }
-        // Password should not be clear text, and is highly recommended to not be empty
+        // If the truststore password has been configured and redacted properly using the Hadoop CredentialProvider API, then
+        // MetastoreConf.getPassword() will securely decrypt it. Otherwise, it will default to being read in from the
+        // configuration file in plain text.
         String trustStorePassword = MetastoreConf.getPassword(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD);
         if (trustStorePassword.isEmpty()) {
           LOG.warn("SSL has been enabled but " + ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD.toString() + " is empty. "
@@ -364,13 +372,11 @@ public class ObjectStore implements RawStore, Configurable {
         // Already validated in MetaStoreConf
         String trustStoreType = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_TYPE);
 
-        System.setProperty("javax.net.ssl.trustStore", trustStorePath);
-        System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
-        System.setProperty("javax.net.ssl.trustStoreType", trustStoreType);
-
-        LOG.info("SSL properties to connect to the database store are now set");
+        System.setProperty(trustStorePathKey, trustStorePath);
+        System.setProperty(trustStorePasswordKey, trustStorePassword);
+        System.setProperty(trustStoreTypeKey, trustStoreType);
       } catch (IOException e) {
-        throw new IllegalArgumentException("Failed to set the SSL properties to connect to the database store. Disabling SSL and continuing.");
+        throw new IllegalArgumentException("Failed to set the SSL properties to connect to the database store.");
       }
     }
   }
@@ -391,12 +397,12 @@ public class ObjectStore implements RawStore, Configurable {
    * @param conf Configuration
    */
   @Deprecated
-  private static void configureSSLDangerously(Configuration conf) {
+  private static void configureSSLDeprecated(Configuration conf) {
     // SSL support
     String sslPropString = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_PROPS);
     if (org.apache.commons.lang.StringUtils.isNotEmpty(sslPropString)) {
-      LOG.warn("DEPRECATED: Configuring SSL using the dangerous method (" + ConfVars.DBACCESS_SSL_PROPS.toString() + ") is deprecated. "
-          + "This may be removed in the next major version of Hive.");
+      LOG.warn("Configuring SSL using a deprecated key " + ConfVars.DBACCESS_SSL_PROPS.toString() +
+              ". This may be removed in the future. See HIVE-20992 for more details.");
       LOG.info("Metastore setting SSL properties of the connection to backend DB");
       for (String sslProp : sslPropString.split(",")) {
         String[] pair = sslProp.trim().split("=");
