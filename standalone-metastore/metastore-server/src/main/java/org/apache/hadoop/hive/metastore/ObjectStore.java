@@ -130,9 +130,9 @@ public class ObjectStore implements RawStore, Configurable {
   /**
    * Java system properties for configuring SSL to the database store
    */
-  private static final String trustStorePathKey = "javax.net.ssl.trustStore";
-  private static final String trustStorePasswordKey = "javax.net.ssl.trustStorePassword";
-  private static final String trustStoreTypeKey = "javax.net.ssl.trustStoreType";
+  private static final String TRUSTSTORE_PATH_KEY = "javax.net.ssl.trustStore";
+  private static final String TRUSTSTORE_PASSWORD_KEY = "javax.net.ssl.trustStorePassword";
+  private static final String TRUSTSTORE_TYPE_KEY = "javax.net.ssl.trustStoreType";
 
   private static final Map<String, Class<?>> PINCLASSMAP;
   private static final String HOSTNAME;
@@ -372,11 +372,11 @@ public class ObjectStore implements RawStore, Configurable {
         // Already validated in MetaStoreConf
         String trustStoreType = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_TYPE);
 
-        System.setProperty(trustStorePathKey, trustStorePath);
-        System.setProperty(trustStorePasswordKey, trustStorePassword);
-        System.setProperty(trustStoreTypeKey, trustStoreType);
+        System.setProperty(TRUSTSTORE_PATH_KEY, trustStorePath);
+        System.setProperty(TRUSTSTORE_PASSWORD_KEY, trustStorePassword);
+        System.setProperty(TRUSTSTORE_TYPE_KEY, trustStoreType);
       } catch (IOException e) {
-        throw new IllegalArgumentException("Failed to set the SSL properties to connect to the database store.");
+        throw new RuntimeException("Failed to set the SSL properties to connect to the database store.", e);
       }
     }
   }
