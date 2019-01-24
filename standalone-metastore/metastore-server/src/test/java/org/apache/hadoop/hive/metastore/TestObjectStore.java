@@ -1076,15 +1076,6 @@ public class TestObjectStore {
   }
 
   /**
-   * Ensure that an empty trustStore path in metastore.dbaccess.ssl.truststore.path (hive.metastore.dbaccess.ssl.truststore.path)
-   * throws an IllegalArgumentException.
-   */
-  @Test(expected = IllegalArgumentException.class)
-  public void testEmptyTrustStorePath() {
-    setAndCheckSSLProperties(true, "", "password", "jks");
-  }
-
-  /**
    * Helper method for setting and checking the SSL configuration parameters.
    */
   private void setAndCheckSSLProperties(boolean useSSL, String trustStorePath, String trustStorePassword, String trustStoreType) {

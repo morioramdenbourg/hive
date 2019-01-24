@@ -355,25 +355,19 @@ public class ObjectStore implements RawStore, Configurable {
       try {
         LOG.info("Setting SSL properties to connect to the database store");
         String trustStorePath = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH).trim();
-        if (trustStorePath.isEmpty()) {
-          throw new IllegalArgumentException("SSL to the database store has been enabled but " + ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH.toString() + " is empty. "
-              + "Set this property to enable SSL.");
+        // Specifying a truststore location is not necessary. If one is not provided, then the default Java truststore will be used instead.
+        if (!trustStorePath.isEmpty()) {
+          System.setProperty(TRUSTSTORE_PATH_KEY, trustStorePath);
         }
         // If the truststore password has been configured and redacted properly using the Hadoop CredentialProvider API, then
         // MetastoreConf.getPassword() will securely decrypt it. Otherwise, it will default to being read in from the
         // configuration file in plain text.
         String trustStorePassword = MetastoreConf.getPassword(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD);
-        if (trustStorePassword.isEmpty()) {
-          LOG.warn("SSL has been enabled but " + ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD.toString() + " is empty. "
-              + "It is highly recommended to set this property. An empty truststore password could compromise the integrity of the truststore file. "
-              + "Arbitrary certificates could be placed into the truststore, thereby potentially exposing an attack vector to this application."
-              + "Continuing with SSL enabled.");
+        if (!trustStorePassword.isEmpty()) {
+          System.setProperty(TRUSTSTORE_PASSWORD_KEY, trustStorePassword);
         }
         // Already validated in MetaStoreConf
         String trustStoreType = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_TYPE);
-
-        System.setProperty(TRUSTSTORE_PATH_KEY, trustStorePath);
-        System.setProperty(TRUSTSTORE_PASSWORD_KEY, trustStorePassword);
         System.setProperty(TRUSTSTORE_TYPE_KEY, trustStoreType);
       } catch (IOException e) {
         throw new RuntimeException("Failed to set the SSL properties to connect to the database store.", e);
