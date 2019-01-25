@@ -462,14 +462,14 @@ public class MetastoreConf {
     DBACCESS_SSL_TRUSTSTORE_PASSWORD("metastore.dbaccess.ssl.truststore.password", "hive.metastore.dbaccess.ssl.truststore.password", "",
         "Password for the Java truststore file that is used when encrypting the connection to the database store. \n"
             + "metastore.dbaccess.ssl.use.SSL must be set to true for this property to take effect. \n"
-            + "This directly maps to the javax.net.ssl.trustStorePassword Java system property. \n"
-            + "It is inadvisable to specify the password in a way that exposes it to discovery by other users."),
+            + "This directly maps to the javax.net.ssl.trustStorePassword Java system property. Defaults to the default Java truststore password. \n"
+            + "It is recommended to specify the password using a credential provider so as to not expose it to discovery by other users. \n"
+            + "One way to do this is by using the Hadoop CredentialProvider API and provisioning credentials for this property. Refer to the Hadoop CredentialProvider API Guide for more details."),
     DBACCESS_SSL_TRUSTSTORE_PATH("metastore.dbaccess.ssl.truststore.path", "hive.metastore.dbaccess.ssl.truststore.path", "",
         "Location on disk of the Java truststore file to use when encrypting the connection to the database store. \n"
             + "This file consists of a collection of certificates trusted by the metastore server. \n"
             + "metastore.dbaccess.ssl.use.SSL must be set to true for this property to take effect. \n"
-            + "This directly maps to the javax.net.ssl.trustStore Java system property. \n"
-            + "If one is not specified, then the default Java truststore file (jssecacerts, if it exists. Otherwise, cacerts) will be used instead."),
+            + "This directly maps to the javax.net.ssl.trustStore Java system property. Defaults to the default Java truststore file. \n"),
     DBACCESS_SSL_TRUSTSTORE_TYPE("metastore.dbaccess.ssl.truststore.type", "hive.metastore.dbaccess.ssl.truststore.type", "jks",
         new StringSetValidator("jceks", "jks", "dks", "pkcs11", "pkcs12"),
         "File type for the Java truststore file that is used when encrypting the connection to the database store. \n"
