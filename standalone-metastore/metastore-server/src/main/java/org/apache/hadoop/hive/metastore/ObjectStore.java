@@ -130,9 +130,9 @@ public class ObjectStore implements RawStore, Configurable {
   /**
    * Java system properties for configuring SSL to the database store
    */
-  private static final String TRUSTSTORE_PATH_KEY = "javax.net.ssl.trustStore";
-  private static final String TRUSTSTORE_PASSWORD_KEY = "javax.net.ssl.trustStorePassword";
-  private static final String TRUSTSTORE_TYPE_KEY = "javax.net.ssl.trustStoreType";
+  public static final String TRUSTSTORE_PATH_KEY = "javax.net.ssl.trustStore";
+  public static final String TRUSTSTORE_PASSWORD_KEY = "javax.net.ssl.trustStorePassword";
+  public static final String TRUSTSTORE_TYPE_KEY = "javax.net.ssl.trustStoreType";
 
   private static final Map<String, Class<?>> PINCLASSMAP;
   private static final String HOSTNAME;
@@ -333,18 +333,18 @@ public class ObjectStore implements RawStore, Configurable {
    *
    * The following properties must be set correctly to enable encryption:
    *
-   * 1. metastore.dbaccess.ssl.use.SSL
-   * 2. javax.jdo.option.ConnectionURL
-   * 3. metastore.dbaccess.ssl.truststore.path
-   * 4. metastore.dbaccess.ssl.truststore.password
-   * 5. metastore.dbaccess.ssl.truststore.type
+   * 1. {@link MetastoreConf.ConfVars#DBACCESS_USE_SSL}
+   * 2. {@link MetastoreConf.ConfVars#CONNECT_URL_KEY}
+   * 3. {@link MetastoreConf.ConfVars#DBACCESS_SSL_TRUSTSTORE_PATH}
+   * 4. {@link MetastoreConf.ConfVars#DBACCESS_SSL_TRUSTSTORE_PASSWORD}
+   * 5. {@link MetastoreConf.ConfVars#DBACCESS_SSL_TRUSTSTORE_TYPE}
    *
    * The last three properties directly map to JSSE (Java) system properties. The Java layer will handle enabling
    * encryption once these properties are set.
    *
-   * Additionally, javax.jdo.option.ConnectionURL must have the database-specific SSL flag in the connection URL.
+   * Additionally, {@link MetastoreConf.ConfVars#CONNECT_URL_KEY} must have the database-specific SSL flag in the connection URL.
    *
-   * @param conf
+   * @param conf configuration values
    */
   private static void configureSSL(Configuration conf) {
     configureSSLDeprecated(conf); // TODO: Deprecate this method
@@ -384,15 +384,15 @@ public class ObjectStore implements RawStore, Configurable {
    *
    * This method was kept for backwards compatibility purposes.
    *
-   * The property metastore.dbaccess.ssl.properties (hive.metastore.dbaccess.ssl.properties) was deprecated in
-   * HIVE-20992 in favor of more transparent and user-friendly properties.
+   * The property {@link MetastoreConf.ConfVars#DBACCESS_SSL_PROPS} was deprecated in HIVE-20992 in favor of more
+   * transparent and user-friendly properties.
    *
-   * Please use the javax.net.ssl.* properties instead. Setting those properties will overwrite the values
+   * Please use the MetastoreConf.ConfVars#DBACCESS_SSL_* instead. Setting those properties will overwrite the values
    * of the deprecated property.
    *
    * The process of completely removing this property and its functionality is being tracked in HIVE-21024.
    *
-   * @param conf Configuration
+   * @param conf configuration values
    */
   @Deprecated
   private static void configureSSLDeprecated(Configuration conf) {
