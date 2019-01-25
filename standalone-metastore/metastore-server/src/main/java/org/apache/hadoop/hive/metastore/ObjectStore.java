@@ -359,7 +359,7 @@ public class ObjectStore implements RawStore, Configurable {
         if (!trustStorePath.isEmpty()) {
           System.setProperty(TRUSTSTORE_PATH_KEY, trustStorePath);
         } else {
-          LOG.info(ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH.toString() + " has not been set. Defaulting to the default Java truststore file");
+          LOG.info(ConfVars.DBACCESS_SSL_TRUSTSTORE_PATH.toString() + " has not been set. Defaulting to jssecacerts, if it exists. Otherwise, cacerts.");
         }
         // If the truststore password has been configured and redacted properly using the Hadoop CredentialProvider API, then
         // MetastoreConf.getPassword() will securely decrypt it. Otherwise, it will default to being read in from the
@@ -368,7 +368,7 @@ public class ObjectStore implements RawStore, Configurable {
         if (!trustStorePassword.isEmpty()) {
           System.setProperty(TRUSTSTORE_PASSWORD_KEY, trustStorePassword);
         } else {
-          LOG.info(ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD.toString() + " has not been set. Defaulting to the default Java truststore password");
+          LOG.info(ConfVars.DBACCESS_SSL_TRUSTSTORE_PASSWORD.toString() + " has not been set. Using default Java truststore password.");
         }
         // Already validated in MetaStoreConf
         String trustStoreType = MetastoreConf.getVar(conf, ConfVars.DBACCESS_SSL_TRUSTSTORE_TYPE);
