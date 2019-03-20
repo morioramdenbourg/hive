@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -3137,51 +3138,61 @@ public abstract class TestHiveMetaStore {
     client.close();
   }
 
+  /**
+   * Test whether the PersistenceManager was successfully cleaned after {@link HiveMetaStoreClient#close()}.
+   * @throws Exception
+   */
   @Test
-  public void testJDOPersistanceManagerCleanup() throws Exception {
-    if (isThriftClient == false) {
+  public void testJDOPersistenceManagerCleanup() throws Exception {
+    if (!isThriftClient) {
       return;
     }
 
-    int numObjectsBeforeClose =  getJDOPersistanceManagerCacheSize();
     HiveMetaStoreClient closingClient = new HiveMetaStoreClient(conf);
     closingClient.getAllDatabases();
+    // Some lingering objects may still exist from other tests.
+    // Getting the number of objects after the API call will ensure that one persistence object has been added.
+    int numObjectsBeforeClose = getJDOPersistenceManagerCacheSize();
     closingClient.close();
     Thread.sleep(5 * 1000); // give HMS time to handle close request
-    int numObjectsAfterClose =  getJDOPersistanceManagerCacheSize();
-    assertTrue(numObjectsBeforeClose == numObjectsAfterClose);
+    int numObjectsAfterClose =  getJDOPersistenceManagerCacheSize();
+    // After cleanup, the number of persistence objects should be exactly one less.
+    Assert.assertEquals(numObjectsBeforeClose - 1, numObjectsAfterClose);
 
     HiveMetaStoreClient nonClosingClient = new HiveMetaStoreClient(conf);
     nonClosingClient.getAllDatabases();
+    // Ensure for lingering objects.
+    numObjectsBeforeClose = getJDOPersistenceManagerCacheSize();
     // Drop connection without calling close. HMS thread deleteContext
     // will trigger cleanup
     nonClosingClient.getTTransport().close();
     Thread.sleep(5 * 1000);
-    int numObjectsAfterDroppedConnection =  getJDOPersistanceManagerCacheSize();
-    assertTrue(numObjectsAfterClose == numObjectsAfterDroppedConnection);
+    numObjectsAfterClose =  getJDOPersistenceManagerCacheSize();
+    // Subtract one after cleanup.
+    Assert.assertEquals(numObjectsBeforeClose - 1, numObjectsAfterClose);
   }
 
-  private static int getJDOPersistanceManagerCacheSize() {
-    JDOPersistenceManagerFactory jdoPmf;
-    Set<JDOPersistenceManager> pmCacheObj;
-    Field pmCache;
+  /**
+   * Helper method to get the number of persistence manager objects.
+   * @return number of persistence manager objects
+   */
+  private static int getJDOPersistenceManagerCacheSize() {
+    Optional<JDOPersistenceManagerFactory> jdoPmf;
+    Optional<Set<JDOPersistenceManager>> pmCacheObj;
     Field pmf;
+    Field pmCache;
     try {
-      pmf = ObjectStore.class.getDeclaredField("pmf");
-      if (pmf != null) {
-        pmf.setAccessible(true);
-        jdoPmf = (JDOPersistenceManagerFactory) pmf.get(null);
-        pmCache = JDOPersistenceManagerFactory.class.getDeclaredField("pmCache");
-        if (pmCache != null) {
-          pmCache.setAccessible(true);
-          pmCacheObj = (Set<JDOPersistenceManager>) pmCache.get(jdoPmf);
-          if (pmCacheObj != null) {
-            return pmCacheObj.size();
-          }
-        }
-      }
+      pmf = PersistenceManagerProvider.class.getDeclaredField("pmf");
+      pmf.setAccessible(true);
+      jdoPmf = Optional.of((JDOPersistenceManagerFactory) pmf.get(null));
+      pmCache = JDOPersistenceManagerFactory.class.getDeclaredField("pmCache");
+      pmCache.setAccessible(true);
+      pmCacheObj = Optional.of((Set<JDOPersistenceManager>) pmCache.get(jdoPmf.orElseThrow(() ->
+          new RuntimeException("pmf has not been initialized"))));
+      return pmCacheObj.orElseThrow(() ->
+          new RuntimeException("pmCache has not been initialized")).size();
     } catch (Exception ex) {
-      System.out.println(ex);
+      LOG.error("Error while retrieving the PersistenceManagerFactory cache size", ex);
     }
     return -1;
   }
